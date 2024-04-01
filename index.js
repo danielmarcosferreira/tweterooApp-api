@@ -13,7 +13,12 @@ app.post("/sign-up", (req, res) => {
 
     if (!username, !avatar) {
         console.log("Deu erro");
-        return res.status(400).send("Insira todos os campos")
+        return res.status(400).send({ error: "Insira todos os campos" })
+    }
+
+    const doesUserExist = users.find(user => user.username === username)
+    if(doesUserExist) {
+        res.status(409).send({ error: "Usuario ja existe" })
     }
 
     const newUser = {
@@ -23,38 +28,45 @@ app.post("/sign-up", (req, res) => {
     }
 
     users.push(newUser)
-    return res.send("Deu bom")
+    return res.send({ message: "OK" })
 })
 
 app.get("/sign-up", (req, res) => {
-    console.log("entrou aqui");
     return res.send(users)
 })
 
 app.post("/tweets", (req, res) => {
-    const { username, tweet } = req.body;
+    const {user} = req.headers
+    const { tweet } = req.body;
 
-    if (!username, !tweet) {
-        console.log("entrou aqui");
-        return res.status(400).send("Insira todos os campos")
+    if (!user, !tweet) {
+        return res.status(400).send({error: "Insira todos os campos"})
     }
-
-    const avatar = users.find((user) => user.username === username)?.avatar
 
     const newTweet = {
         id: tweets.length + 1,
-        username,
-        avatar,
+        user,
         tweet
     }
 
     tweets.push(newTweet)
-    return res.status(201).send("Deu bom")
+    return res.status(201).send({message: "OK"})
 })
 
 app.get("/tweets", (req, res) => {
-    return res.send(tweets)
+    tweets.forEach(tweet => {
+        const {avatar} = users.find(user => user.username === tweet.user)
+        tweet.avatar = avatar
+    })
+    return res.send(tweets.slice(-10).reverse())
 })
 
+app.get("/tweets/:username", (req, res) => {
+    const {username} = req.params
 
-app.listen(4000, () => console.log("Server running in port 4000"));
+    const tweetsUser = tweets.filter((tweet) => tweet.username === username)
+
+    return res.send(tweetsUser.reverse())
+})
+
+app.listen(4005, () => console.log("Server running in port 4005"));
