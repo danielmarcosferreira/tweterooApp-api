@@ -17,7 +17,7 @@ app.post("/sign-up", (req, res) => {
     }
 
     const doesUserExist = users.find(user => user.username === username)
-    if(doesUserExist) {
+    if (doesUserExist) {
         res.status(409).send({ error: "Usuario ja existe" })
     }
 
@@ -36,11 +36,11 @@ app.get("/sign-up", (req, res) => {
 })
 
 app.post("/tweets", (req, res) => {
-    const {user} = req.headers
+    const { user } = req.headers
     const { tweet } = req.body;
 
     if (!user, !tweet) {
-        return res.status(400).send({error: "Insira todos os campos"})
+        return res.status(400).send({ error: "Insira todos os campos" })
     }
 
     const newTweet = {
@@ -50,19 +50,33 @@ app.post("/tweets", (req, res) => {
     }
 
     tweets.push(newTweet)
-    return res.status(201).send({message: "OK"})
+    return res.status(201).send({ message: "OK" })
 })
 
 app.get("/tweets", (req, res) => {
+    const { page } = req.query
+
+    if (page < 1) {
+        return res.status(400).send({ error: "Informe uma pagina valida" })
+    }
+
+    const limit = 10
+    const start = (page - 1) * limit
+    const end = page * limit
+
     tweets.forEach(tweet => {
-        const {avatar} = users.find(user => user.username === tweet.user)
+        const { avatar } = users.find(user => user.username === tweet.user)
         tweet.avatar = avatar
     })
-    return res.send(tweets.slice(-10).reverse())
+
+    if (tweets.length < 10) {
+        return res.send(tweets.reverse())
+    }
+    return res.send(tweets.reverse().slice(start, end))
 })
 
 app.get("/tweets/:username", (req, res) => {
-    const {username} = req.params
+    const { username } = req.params
 
     const tweetsUser = tweets.filter((tweet) => tweet.username === username)
 
